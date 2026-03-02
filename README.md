@@ -1,7 +1,7 @@
 # STM32F103 Calculator
 
 Bare-metal C calculator running on the STM32F103C8T6 (Blue Pill).
-Direct HAL register access — no Arduino, no RTOS.
+Direct HAL register access  no RTOS.
 
 ---
 
@@ -22,15 +22,17 @@ Direct HAL register access — no Arduino, no RTOS.
 ### LCD → STM32 (Port B)
 | LCD Pin | STM32 Pin | Notes                        |
 |---------|-----------|------------------------------|
-| RS      | PB0       |                              |
-| EN      | PB1       |                              |
-| D4      | PB4       |                              |
-| D5      | PB5       |                              |
-| D6      | PB6       |                              |
-| D7      | PB7       |                              |
+| RS      | PB0       | The Reset pin                |
+| EN      | PB1       | The Enable pin               |
+| D4      | PB4       | Data Pin 4                   |
+| D5      | PB5       | Data Pin 5                   |
+| D6      | PB6       | Data Pin 6                   |
+| D7      | PB7       | Data Pin 7                   |
 | RW      | GND       | Always write mode            |
 | V0      | Pot wiper | Contrast adjust              |
-| VDD/VSS | 3.3V/GND  |                              |
+| VDD/VSS | 3.3V/GND  | Power Pin                    |
+
+---
 
 ### Keypad → STM32 (Port A)
 | Keypad | STM32 Pin | Mode              |
@@ -44,6 +46,8 @@ Direct HAL register access — no Arduino, no RTOS.
 | C3     | PA6       | Input, pull-up    |
 | C4     | PA7       | Input, pull-up    |
 
+---
+
 ### Keypad Layout
 ```
 [ 1 ][ 2 ][ 3 ][ + ]
@@ -51,6 +55,7 @@ Direct HAL register access — no Arduino, no RTOS.
 [ 7 ][ 8 ][ 9 ][ * ]
 [ C ][ 0 ][ = ][ / ]
 ```
+---
 
 > **Note:** Add a `.` (decimal point) key by remapping one of the unused
 > operator cells in `KP_MAP` and handling `key == '.'` — already
@@ -62,31 +67,36 @@ Direct HAL register access — no Arduino, no RTOS.
 
 ```
 stm32-calculator/
-├── main.c                      ← Application logic
-├── main.h                      ← Header / HAL include
-├── Makefile                    ← Build, flash, debug targets
-├── STM32F103C8Tx_FLASH.ld      ← Linker script (from CubeMX)
-├── startup_stm32f103xb.s       ← Startup file (from CubeMX)
-└── Drivers/
-    ├── CMSIS/
-    └── STM32F1xx_HAL_Driver/
+├── src/
+│   └── main.c                  ← Application logic
+├── include/
+│   └── main.h                  ← Header / HAL include
+├── platformio.ini              ← Build, flash, debug configuration
+├── .gitignore
+└── README.md
 ```
+> The HAL Drivers, linker script, startup file, and CMSIS headers are
+> managed autmatically by PlatformIO. They are downloaded on first 
+> build to `~/.platformio/packages/` and require no maunal setup.
 
-> The `Drivers/` folder, linker script, and startup file come from
-> STM32CubeMX or the STM32CubeF1 firmware package. They are not
-> included here — copy them from your CubeMX-generated project.
 
 ---
 
 ## Toolchain & Dependencies
 
-```bash
-# Ubuntu/Debian
-sudo apt install gcc-arm-none-eabi openocd
+Install PlatformIO as a VS Code extension, it handles the entire toolchain automatically inncluding `arm-none-eabi-gcc`, OpenOCD , and all STM32HAL drivers.
 
-# macOS (Homebrew)
-brew install --cask gcc-arm-embedded
-brew install open-ocd
+`platformio.ini`:
+```
+[env:bluepill_f103c8]
+platform = ststm32
+board = bluepill_f103c8
+framework = stm32cube
+
+build_flag =
+    - DSTM32F103xB
+    - DUSE_HAL-DRIVER
+    - lm
 ```
 
 ---
@@ -95,13 +105,13 @@ brew install open-ocd
 
 ```bash
 # Build
-make
+pio run
 
-# Flash via ST-Link V2 + OpenOCD
-make flash
+# Flash via ST-Link V2
+pio run --target upload
 
-# Debug with GDB
-make debug
+#Clean build output
+pio run --target clean
 ```
 
 ---
